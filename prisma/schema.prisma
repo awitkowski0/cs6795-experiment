@@ -19,6 +19,7 @@ model Participant {
   education     String
   consentedAt   DateTime  @default(now())
   sessions      Session[]
+  finalRatings  Json? // New field for final survey ratings
   createdAt     DateTime  @default(now())
   
   @@map("participants")
@@ -33,9 +34,23 @@ model Challenge {
   systemPromptB String
   useUserData   Boolean   @default(false)
   sessions      Session[]
+  challengeRatings ChallengeRating[] // New relation
   createdAt     DateTime  @default(now())
   
   @@map("challenges")
+}
+
+model ChallengeRating {
+  id             String    @id @default(cuid())
+  sessionId      String
+  challengeId    String
+  preferredAgent String?
+  reason         String?
+  session        Session   @relation(fields: [sessionId], references: [id])
+  challenge      Challenge @relation(fields: [challengeId], references: [id])
+  createdAt      DateTime  @default(now())
+
+  @@map("challenge_ratings")
 }
 
 model Session {
@@ -45,7 +60,7 @@ model Session {
   participant   Participant    @relation(fields: [participantId], references: [id])
   challenge     Challenge      @relation(fields: [challengeId], references: [id])
   conversations Conversation[]
-  ratings       Rating[]
+  challengeRatings ChallengeRating[]
   completedAt   DateTime?
   createdAt     DateTime       @default(now())
   
@@ -63,14 +78,3 @@ model Conversation {
   @@map("conversations")
 }
 
-model Rating {
-  id           String   @id @default(cuid())
-  sessionId    String
-  questionType String   // "helpfulness_a", "trustworthiness_b", "choice", "open_ended", etc.
-  value        Int?     // 1-7 scale for Likert, null for text responses
-  textValue    String?  // For open-ended responses and forced choice
-  session      Session  @relation(fields: [sessionId], references: [id])
-  createdAt    DateTime @default(now())
-  
-  @@map("ratings")
-}

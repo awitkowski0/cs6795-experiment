@@ -21,12 +21,6 @@ const conversationSchema = z.object({
   messages: z.array(chatMessageSchema),
 });
 
-const ratingSchema = z.object({
-  questionType: z.string(),
-  value: z.number().min(1).max(7).optional(),
-  textValue: z.string().optional(),
-});
-
 export const surveyRouter = createTRPCRouter({
   createParticipant: publicProcedure
     .input(demographicsSchema)
@@ -85,19 +79,21 @@ export const surveyRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  saveRatings: publicProcedure
+  saveChallengeRating: publicProcedure
     .input(z.object({
       sessionId: z.string(),
-      ratings: z.array(ratingSchema),
+      challengeId: z.string(),
+      preferredAgent: z.enum(["A", "B"]).nullable(),
+      reason: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      await db.rating.createMany({
-        data: input.ratings.map(rating => ({
+      await db.challengeRating.create({
+        data: {
           sessionId: input.sessionId,
-          questionType: rating.questionType,
-          value: rating.value,
-          textValue: rating.textValue,
-        })),
+          challengeId: input.challengeId,
+          preferredAgent: input.preferredAgent,
+          reason: input.reason,
+        },
       });
       return { success: true };
     }),
@@ -112,6 +108,21 @@ export const surveyRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  saveFinalRatings: publicProcedure
+    .input(z.object({
+      surveyId: z.string(),
+      finalRatings: z.record(z.string(), z.union([z.string(), z.number()])),
+    }))
+    .mutation(async ({ input }) => {
+      await db.participant.update({
+        where: { id: input.surveyId },
+        data: {
+          finalRatings: input.finalRatings,
+        },
+      });
+      return { success: true };
+    }),
+
   getParticipantSessions: publicProcedure
     .input(z.object({ participantId: z.string() }))
     .query(async ({ input }) => {
@@ -120,7 +131,7 @@ export const surveyRouter = createTRPCRouter({
         include: {
           challenge: true,
           conversations: true,
-          ratings: true,
+          challengeRatings: true,
         },
         orderBy: { createdAt: "asc" },
       });

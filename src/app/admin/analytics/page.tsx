@@ -57,14 +57,7 @@ export default function AnalyticsPage() {
 
     exportData.participants.forEach((participant) => {
       participant.sessions.forEach((session) => {
-        const ratings = session.ratings.reduce((acc: any, rating) => {
-          if (rating.value !== null) {
-            acc[rating.questionType] = rating.value;
-          } else {
-            acc[rating.questionType] = rating.textValue;
-          }
-          return acc;
-        }, {});
+        const challengeRating = session.challengeRatings[0]; // Assuming one challenge rating per session
 
         const conversationA = session.conversations.find(c => c.side === "A");
         const conversationB = session.conversations.find(c => c.side === "B");
@@ -81,17 +74,8 @@ export default function AnalyticsPage() {
           `"${participant.demographics.education}"`,
           session.challengeNumber,
           `"${session.challengeTitle}"`,
-          ratings.helpfulness_a || "",
-          ratings.helpfulness_b || "",
-          ratings.trustworthiness_a || "",
-          ratings.trustworthiness_b || "",
-          ratings.intelligence_a || "",
-          ratings.intelligence_b || "",
-          ratings.friendliness_a || "",
-          ratings.friendliness_b || "",
-          ratings.confidence || "",
-          `"${ratings.choice || ""}"`,
-          `"${(ratings.open_ended || "").replace(/"/g, '""')}"`,
+          challengeRating?.preferredAgent || "",
+          `"${(challengeRating?.reason || "").replace(/"/g, '""')}"`,
           messagesA,
           messagesB,
           session.completedAt || ""
@@ -114,41 +98,15 @@ export default function AnalyticsPage() {
   const calculateAverages = () => {
     if (!exportData) return null;
 
-    const allRatings = exportData.participants.flatMap(p =>
-      p.sessions.flatMap(s => s.ratings)
+    const allChallengeRatings = exportData.participants.flatMap(p =>
+      p.sessions.flatMap(s => s.challengeRatings)
     );
 
-    const metrics = [
-      "helpfulness_a", "helpfulness_b",
-      "trustworthiness_a", "trustworthiness_b", 
-      "intelligence_a", "intelligence_b",
-      "friendliness_a", "friendliness_b",
-      "confidence"
-    ];
+    const choiceA = allChallengeRatings.filter(cr => cr.preferredAgent === "A").length;
+    const choiceB = allChallengeRatings.filter(cr => cr.preferredAgent === "B").length;
+    const totalChoices = allChallengeRatings.length;
 
-    const averages: any = {};
-    metrics.forEach(metric => {
-      const values = allRatings
-        .filter(r => r.questionType === metric && r.value !== null)
-        .map(r => r.value!);
-      
-      if (values.length > 0) {
-        averages[metric] = {
-          mean: values.reduce((a, b) => a + b, 0) / values.length,
-          count: values.length
-        };
-      }
-    });
-
-    // Agent choice analysis
-    const choices = allRatings
-      .filter(r => r.questionType === "choice")
-      .map(r => r.textValue);
-    
-    const choiceA = choices.filter(c => c === "Agent A").length;
-    const choiceB = choices.filter(c => c === "Agent B").length;
-
-    return { averages, choiceA, choiceB, totalChoices: choices.length };
+    return { choiceA, choiceB, totalChoices };
   };
 
   const analytics = calculateAverages();
@@ -223,10 +181,6 @@ export default function AnalyticsPage() {
                   <p className="text-2xl font-bold text-black">{stats.totalConversations}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded text-center">
-                  <h3 className="text-sm font-semibold text-gray-600 mb-1">Ratings</h3>
-                  <p className="text-2xl font-bold text-black">{stats.totalRatings}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded text-center">
                   <h3 className="text-sm font-semibold text-gray-600 mb-1">Completion Rate</h3>
                   <p className="text-2xl font-bold text-black">
                     {stats.totalSessions > 0 ? Math.round((stats.completedSessions / stats.totalSessions) * 100) : 0}%
@@ -237,27 +191,6 @@ export default function AnalyticsPage() {
 
             {analytics && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div className="bg-gray-50 p-6 rounded">
-                  <h2 className="text-xl font-bold text-black mb-4">Average Ratings (1-7 scale)</h2>
-                  <div className="space-y-3">
-                    {Object.entries(analytics.averages).map(([key, data]: [string, any]) => (
-                      <div key={key} className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-black capitalize">
-                          {key.replace(/_/g, ' ')}
-                        </span>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-black">
-                            {data.mean.toFixed(2)}
-                          </span>
-                          <span className="text-xs text-gray-500 ml-2">
-                            (n={data.count})
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="bg-gray-50 p-6 rounded">
                   <h2 className="text-xl font-bold text-black mb-4">Agent Preferences</h2>
                   <div className="space-y-4">

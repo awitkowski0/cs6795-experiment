@@ -19,7 +19,7 @@ export const adminRouter = createTRPCRouter({
           include: {
             challenge: true,
             conversations: true,
-            ratings: true,
+            challengeRatings: true,
           },
         },
       },
@@ -50,12 +50,11 @@ export const adminRouter = createTRPCRouter({
         where: { id: input.participantId },
         include: {
           sessions: {
-            include: {
-              challenge: true,
-              conversations: true,
-              ratings: true,
-            },
-            orderBy: {
+                      include: {
+                        challenge: true,
+                        conversations: true,
+                        challengeRatings: true,
+                      },            orderBy: {
               createdAt: "asc",
             },
           },
@@ -74,7 +73,7 @@ export const adminRouter = createTRPCRouter({
           challengeNumber: session.challenge.number,
           completedAt: session.completedAt,
           conversationCount: session.conversations.length,
-          ratingsCount: session.ratings.length,
+          challengeRatingsCount: session.challengeRatings.length,
         })),
       };
     }),
@@ -86,7 +85,7 @@ export const adminRouter = createTRPCRouter({
           include: {
             challenge: true,
             conversations: true,
-            ratings: true,
+            challengeRatings: true,
           },
         },
       },
@@ -116,6 +115,7 @@ export const adminRouter = createTRPCRouter({
           education: participant.education,
         },
         consentedAt: participant.consentedAt,
+        finalRatings: participant.finalRatings,
         sessions: participant.sessions.map((session) => ({
           challengeNumber: session.challenge.number,
           challengeTitle: session.challenge.title,
@@ -128,10 +128,9 @@ export const adminRouter = createTRPCRouter({
             side: conv.side,
             messages: conv.messages,
           })),
-          ratings: session.ratings.map((rating) => ({
-            questionType: rating.questionType,
-            value: rating.value,
-            textValue: rating.textValue,
+          challengeRatings: session.challengeRatings.map((rating) => ({
+            preferredAgent: rating.preferredAgent,
+            reason: rating.reason,
           })),
         })),
       })),
@@ -147,7 +146,6 @@ export const adminRouter = createTRPCRouter({
       where: { completedAt: { not: null } },
     });
     const totalConversations = await db.conversation.count();
-    const totalRatings = await db.rating.count();
 
     const challengeStats = await db.challenge.findMany({
       include: {
@@ -165,7 +163,6 @@ export const adminRouter = createTRPCRouter({
       totalSessions,
       completedSessions,
       totalConversations,
-      totalRatings,
       challengeStats: challengeStats.map((challenge) => ({
         number: challenge.number,
         title: challenge.title,

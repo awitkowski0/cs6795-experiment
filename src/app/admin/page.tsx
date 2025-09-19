@@ -9,7 +9,7 @@ interface SessionDetail {
   challengeNumber: number;
   completedAt: Date | null;
   conversationCount: number;
-  ratingsCount: number;
+  challengeRatingsCount: number;
 }
 
 export default function AdminDashboard() {
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                               Status: {session.completedAt ? "Completed" : "In Progress"}
                             </p>
                             <p className="text-xs text-gray-600">
-                              Conversations: {session.conversationCount}, Ratings: {session.ratingsCount}
+                              Conversations: {session.conversationCount}, Ratings: {session.challengeRatingsCount}
                             </p>
                             {session.completedAt && (
                               <p className="text-xs text-gray-600">

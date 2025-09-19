@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import type { DemographicsData } from "~/components/DemographicsForm";
 import type { ChatMessage } from "~/components/ChatWindow";
 import SurveyStorage, { type SurveyStep, type SurveySession } from "~/lib/surveyStorage";
+import { api } from "~/trpc/react";
 
 interface SurveyState {
   step: SurveyStep;
@@ -17,6 +18,7 @@ interface SurveyState {
   progress: number;
   isComplete: boolean;
   hasExistingSession: boolean;
+  finalRatings: Record<string, number> | null;
 }
 
 interface SurveyContextValue {
@@ -25,7 +27,8 @@ interface SurveyContextValue {
   submitDemographics: (data: DemographicsData, participantId: string) => void;
   startChallenge: (sessionId: string) => void;
   completeChallenge: (conversationA: ChatMessage[], conversationB: ChatMessage[]) => void;
-  submitRatings: (ratings: any[]) => void;
+  submitChallengeRating: (challengeId: string, preferredAgent: "A" | "B" | null, reason: string) => void;
+  submitFinalRatings: (ratings: Record<string, string | number>) => void;
   nextChallenge: () => void;
   completeSurvey: () => void;
   reset: () => void;
@@ -47,10 +50,15 @@ const createInitialState = (): SurveyState => ({
   progress: 0,
   isComplete: false,
   hasExistingSession: false,
+  finalRatings: null,
 });
 
 export function SurveyProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SurveyState>(createInitialState);
+
+  const completeSessionMutation = api.survey.completeSession.useMutation();
+  const saveChallengeRatingMutation = api.survey.saveChallengeRating.useMutation();
+  const saveFinalRatingsMutation = api.survey.saveFinalRatings.useMutation();
 
   const saveToStorage = (newState: SurveyState) => {
     const session: SurveySession = {
@@ -61,6 +69,7 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
       currentChallengeNumber: newState.currentChallengeNumber,
       participantData: newState.participantData,
       challengeProgress: [], // Will be updated separately
+      finalRatings: newState.finalRatings,
       timestamps: {
         started: new Date(),
         lastActivity: new Date(),
@@ -134,14 +143,6 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   };
 
   const completeChallenge = (conversationA: ChatMessage[], conversationB: ChatMessage[]) => {
-    // Save challenge progress to storage
-    SurveyStorage.saveChallengeProgress(
-      state.currentChallengeNumber,
-      state.sessionId,
-      conversationA,
-      conversationB
-    );
-    
     setState(prev => ({
       ...prev,
       step: "rating",
@@ -150,16 +151,43 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const submitRatings = (ratings: any[]) => {
-    // Save ratings to storage
-    SurveyStorage.saveRatings(state.currentChallengeNumber, ratings);
-    
-    if (state.currentChallengeNumber >= 5) {
-      SurveyStorage.markComplete();
-      setState(prev => ({ ...prev, step: "complete", isComplete: true }));
+  const submitChallengeRating = async (challengeId: string, preferredAgent: "A" | "B" | null, reason: string) => {
+    SurveyStorage.saveChallengeProgress(
+      state.currentChallengeNumber,
+      state.sessionId,
+      state.conversationA,
+      state.conversationB,
+      preferredAgent,
+      reason
+    );
+
+    if (state.sessionId && state.participantId) {
+      await saveChallengeRatingMutation.mutateAsync({
+        sessionId: state.sessionId,
+        challengeId: challengeId,
+        preferredAgent,
+        reason,
+      });
+      await completeSessionMutation.mutateAsync({ sessionId: state.sessionId });
+    }
+
+    if (state.currentChallengeNumber >= 5) { // Assuming 5 challenges for now
+      setState(prev => ({ ...prev, step: "final" }));
     } else {
       nextChallenge();
     }
+  };
+
+  const submitFinalRatings = async (ratings: Record<string, string | number>) => {
+    // Save final ratings to storage
+    SurveyStorage.saveFinalRatings(ratings);
+    if (state.participantId) {
+      await saveFinalRatingsMutation.mutateAsync({
+        surveyId: state.participantId,
+        finalRatings: ratings,
+      });
+    }
+    completeSurvey();
   };
 
   const nextChallenge = () => {
@@ -173,7 +201,10 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const completeSurvey = () => {
+  const completeSurvey = async () => {
+    if (state.sessionId) {
+      await completeSessionMutation.mutateAsync({ sessionId: state.sessionId });
+    }
     SurveyStorage.markComplete();
     setState(prev => ({ ...prev, step: "complete", isComplete: true }));
   };
@@ -216,7 +247,8 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
     submitDemographics,
     startChallenge,
     completeChallenge,
-    submitRatings,
+    submitChallengeRating,
+    submitFinalRatings,
     nextChallenge,
     completeSurvey,
     reset,

@@ -5,43 +5,43 @@ import { useSurvey } from "~/contexts/SurveyContext";
 import { DataConsentDialog } from "./DataConsentDialog";
 import { DemographicsForm, type DemographicsData } from "./DemographicsForm";
 import { ChallengeScreen } from "./ChallengeScreen";
-import { ResearchRatingForm } from "./ResearchRatingForm";
+import { ChallengeRatingForm } from "./ChallengeRatingForm";
+import { FinalSurveyForm } from "./FinalSurveyForm";
 import { ProgressBar } from "./ProgressBar";
 import { api } from "~/trpc/react";
 import type { ChatMessage } from "./ChatWindow";
+import { type RouterOutputs } from "~/trpc/react";
 
 export function SurveyWorkflow() {
-  const { state, giveConsent, submitDemographics, startChallenge, completeChallenge, submitRatings, reset, clearStorage } = useSurvey();
-  const [currentChallenge, setCurrentChallenge] = useState<any>(null);
+  const { state, giveConsent, submitDemographics, startChallenge, completeChallenge, submitChallengeRating, submitFinalRatings, clearStorage } = useSurvey();
+  const [currentChallenge, setCurrentChallenge] = useState<RouterOutputs["survey"]["getChallenge"] | null>(null);
   const [loading, setLoading] = useState(false);
   
   const initializeChallenges = api.survey.initializeChallenges.useMutation();
   const createParticipant = api.survey.createParticipant.useMutation();
-  const { data: challengeData, refetch: refetchChallenge } = api.survey.getChallenge.useQuery(
-    { number: state.currentChallengeNumber },
-    { enabled: false }
-  );
   const createSession = api.survey.createSession.useMutation();
   const saveConversations = api.survey.saveConversations.useMutation();
-  const saveRatings = api.survey.saveRatings.useMutation();
-  const completeSession = api.survey.completeSession.useMutation();
+  const { data: allChallenges, isLoading: isLoadingChallenges } = api.survey.getChallenges.useQuery();
 
   useEffect(() => {
-    initializeChallenges.mutate();
-  }, []);
+    if (!isLoadingChallenges && (!allChallenges || allChallenges.length === 0)) {
+      initializeChallenges.mutate();
+    }
+  }, [isLoadingChallenges, allChallenges]);
 
   useEffect(() => {
-    if (state.step === "challenge" && state.currentChallengeNumber) {
+    if (state.step === "challenge" && state.currentChallengeNumber && allChallenges) {
       loadChallenge();
     }
-  }, [state.step, state.currentChallengeNumber]);
+  }, [state.step, state.currentChallengeNumber, allChallenges]);
 
   const loadChallenge = async () => {
     setLoading(true);
     try {
-      const result = await refetchChallenge();
-      const challenge = result.data;
-      setCurrentChallenge(challenge);
+      const challenge = allChallenges?.find(c => c.number === state.currentChallengeNumber);
+      if (challenge) {
+        setCurrentChallenge(challenge);
+      }
       
       if (challenge && state.participantId) {
         const session = await createSession.mutateAsync({
@@ -56,6 +56,7 @@ export function SurveyWorkflow() {
       setLoading(false);
     }
   };
+
 
   const handleDemographicsSubmit = async (data: DemographicsData) => {
     setLoading(true);
@@ -89,33 +90,11 @@ export function SurveyWorkflow() {
     }
   };
 
-  const handleRatingsSubmit = async (ratings: any[]) => {
-    if (!state.sessionId) return;
-    
-    setLoading(true);
-    try {
-      await saveRatings.mutateAsync({
-        sessionId: state.sessionId,
-        ratings,
-      });
-      
-      await completeSession.mutateAsync({
-        sessionId: state.sessionId,
-      });
-      
-      submitRatings(ratings);
-    } catch (error) {
-      console.error("Failed to save ratings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeclineConsent = () => {
     alert("Thank you for your time. You may close this window.");
   };
 
-  if (loading) {
+  if (loading || isLoadingChallenges) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -180,13 +159,17 @@ export function SurveyWorkflow() {
             onComplete={handleChallengeComplete}
           />
       )}
-
       {state.step === "rating" && currentChallenge && (
         <div className="min-h-screen flex items-center justify-center py-12 pt-20">
-          <ResearchRatingForm 
-            challengeNumber={state.currentChallengeNumber}
-            challengeTitle={currentChallenge.title}
-            onSubmit={handleRatingsSubmit} 
+          <ChallengeRatingForm 
+            challenge={currentChallenge}
+          />
+        </div>
+      )}
+      {state.step === "final" && (
+        <div className="min-h-screen flex items-center justify-center py-12 pt-20">
+          <FinalSurveyForm 
+            onComplete={submitFinalRatings}
           />
         </div>
       )}

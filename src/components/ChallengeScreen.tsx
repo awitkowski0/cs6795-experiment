@@ -47,6 +47,8 @@ useEffect(() => {
           handleSendMessageA(challenge.userPrompt),
           handleSendMessageB(challenge.userPrompt)
         ]);
+        setQuestionsUsedA(1);
+        setQuestionsUsedB(1);
       };
 
       runInitialPrompt();
@@ -66,7 +68,6 @@ useEffect(() => {
     
     setConversationA(prev => [...prev, userMessage]);
     setLoadingA(true);
-    setQuestionsUsedA(prev => prev + 1);
 
     // Add empty assistant message for streaming
     const assistantMessageIndex = conversationA.length + 1;
@@ -135,7 +136,6 @@ useEffect(() => {
     
     setConversationB(prev => [...prev, userMessage]);
     setLoadingB(true);
-    setQuestionsUsedB(prev => prev + 1);
 
     // Add empty assistant message for streaming
     const assistantMessageIndex = conversationB.length + 1;

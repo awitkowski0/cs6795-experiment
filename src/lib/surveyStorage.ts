@@ -6,6 +6,7 @@ export type SurveyStep =
   | "demographics"
   | "challenge"
   | "rating"
+  | "final"
   | "complete";
 
 export interface ChallengeProgress {
@@ -13,7 +14,8 @@ export interface ChallengeProgress {
   sessionId: string | null;
   conversationA: ChatMessage[];
   conversationB: ChatMessage[];
-  ratings: any[] | null;
+  preferredAgent: "A" | "B" | null;
+  reason: string | null;
   completedAt: Date | null;
 }
 
@@ -25,6 +27,7 @@ export interface SurveySession {
   currentChallengeNumber: number;
   participantData: DemographicsData | null;
   challengeProgress: ChallengeProgress[];
+  finalRatings: Record<string, string | number> | null; // New field for final survey ratings
   timestamps: {
     started: Date;
     lastActivity: Date;
@@ -121,6 +124,7 @@ class SurveyStorage {
       currentChallengeNumber: 1,
       participantData: null,
       challengeProgress: [],
+      finalRatings: null,
       timestamps: {
         started: new Date(),
         lastActivity: new Date(),
@@ -162,10 +166,11 @@ class SurveyStorage {
     if (session.isComplete) return 100;
 
     const stepProgress = {
-      consent: 10,
-      demographics: 20,
-      challenge: 20 + (session.currentChallengeNumber - 1) * 14, // Each challenge worth 14%
-      rating: 20 + (session.currentChallengeNumber - 1) * 14 + 7, // Rating adds 7%
+      consent: 5,
+      demographics: 10,
+      challenge: 10 + (session.currentChallengeNumber - 1) * 15, // Each challenge worth 15%
+      rating: 10 + (session.currentChallengeNumber - 1) * 15 + 7.5, // Rating adds 7.5% (half of challenge)
+      final: 90,
       complete: 100,
     };
 
@@ -176,7 +181,9 @@ class SurveyStorage {
     challengeNumber: number,
     sessionId: string | null,
     conversationA: ChatMessage[],
-    conversationB: ChatMessage[]
+    conversationB: ChatMessage[],
+    preferredAgent: "A" | "B" | null,
+    reason: string | null,
   ): boolean {
     const session = this.loadSession();
     if (!session) return false;
@@ -190,8 +197,9 @@ class SurveyStorage {
       sessionId,
       conversationA,
       conversationB,
-      ratings: null,
-      completedAt: null,
+      preferredAgent,
+      reason,
+      completedAt: new Date(),
     };
 
     if (progressIndex >= 0) {
@@ -206,20 +214,10 @@ class SurveyStorage {
     return this.saveSession(session);
   }
 
-  static saveRatings(challengeNumber: number, ratings: any[]): boolean {
-    const session = this.loadSession();
-    if (!session) return false;
-
-    const progressIndex = session.challengeProgress.findIndex(
-      p => p.challengeNumber === challengeNumber
-    );
-
-    if (progressIndex >= 0 && session.challengeProgress[progressIndex]) {
-      session.challengeProgress[progressIndex]!.ratings = ratings;
-      session.challengeProgress[progressIndex]!.completedAt = new Date();
-    }
-
-    return this.saveSession(session);
+  static saveFinalRatings(ratings: Record<string, string | number>): boolean {
+    return this.updateSession({
+      finalRatings: ratings,
+    });
   }
 
   static isSessionExpired(session: SurveySession, maxAgeHours = 24): boolean {
