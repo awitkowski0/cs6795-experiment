@@ -5,7 +5,6 @@
     }
   },
   "env": {
-    "DATABASE_URL": "@database-url",
     "OPENROUTER_API_KEY": "@openrouter-api-key",
     "ADMIN_SECRET": "@admin-secret"
   }
