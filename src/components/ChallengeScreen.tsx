@@ -51,11 +51,6 @@ export function ChallengeScreen({ challenge, participantData, onComplete }: Chal
 
     // Add empty assistant message for streaming
     const assistantMessageIndex = conversationA.length + 1;
-    setConversationA(prev => [...prev, {
-      role: "assistant",
-      content: "",
-      timestamp: Date.now(),
-    }]);
 
     try {
       const response = await fetch("/api/chat", {
@@ -81,7 +76,8 @@ export function ChallengeScreen({ challenge, participantData, onComplete }: Chal
 
         const chunk = new TextDecoder().decode(value);
         streamedContent += chunk;
-        
+        setLoadingA(false);
+
         // Update the assistant message with streamed content
         setConversationA(prev => {
           const newConv = [...prev];
@@ -124,11 +120,6 @@ export function ChallengeScreen({ challenge, participantData, onComplete }: Chal
 
     // Add empty assistant message for streaming
     const assistantMessageIndex = conversationB.length + 1;
-    setConversationB(prev => [...prev, {
-      role: "assistant",
-      content: "",
-      timestamp: Date.now(),
-    }]);
 
     try {
       const response = await fetch("/api/chat", {
@@ -154,7 +145,8 @@ export function ChallengeScreen({ challenge, participantData, onComplete }: Chal
 
         const chunk = new TextDecoder().decode(value);
         streamedContent += chunk;
-        
+        setLoadingB(false);
+
         // Update the assistant message with streamed content
         setConversationB(prev => {
           const newConv = [...prev];
