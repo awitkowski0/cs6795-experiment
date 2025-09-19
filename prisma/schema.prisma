@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Participant {
+  id            String    @id @default(cuid())
+  name          String
+  age           Int
+  location      String
+  profession    String
+  education     String
+  consentedAt   DateTime  @default(now())
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  
+  @@map("participants")
+}
+
+model Challenge {
+  id            String    @id @default(cuid())
+  number        Int       @unique
+  title         String
+  userPrompt    String
+  systemPromptA String
+  systemPromptB String
+  useUserData   Boolean   @default(false)
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  
+  @@map("challenges")
+}
+
+model Session {
+  id            String         @id @default(cuid())
+  participantId String
+  challengeId   String
+  participant   Participant    @relation(fields: [participantId], references: [id])
+  challenge     Challenge      @relation(fields: [challengeId], references: [id])
+  conversations Conversation[]
+  ratings       Rating[]
+  completedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  
+  @@map("sessions")
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  sessionId String
+  side      String    // "A" or "B"
+  messages  Json      // Array of chat messages
+  session   Session   @relation(fields: [sessionId], references: [id])
+  createdAt DateTime  @default(now())
+  
+  @@map("conversations")
+}
+
+model Rating {
+  id           String   @id @default(cuid())
+  sessionId    String
+  questionType String   // "helpfulness_a", "trustworthiness_b", "choice", "open_ended", etc.
+  value        Int?     // 1-7 scale for Likert, null for text responses
+  textValue    String?  // For open-ended responses and forced choice
+  session      Session  @relation(fields: [sessionId], references: [id])
+  createdAt    DateTime @default(now())
+  
+  @@map("ratings")
+}
