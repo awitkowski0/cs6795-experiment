@@ -35,17 +35,20 @@ export function DataConsentDialog({ isOpen, onConsent, onDecline }: DataConsentD
           <div className="space-y-2">
             <h3 className="font-semibold">How We Use This Data:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>Research analysis on AI interaction effectiveness</li>
+              <li>Research analysis on AI interaction</li>
               <li>Academic publication and presentation</li>
+              <li>Usage with LLM's</li>
             </ul>
           </div>
           
           <div className="space-y-2">
-            <h3 className="font-semibold">Your Rights:</h3>
+            <h3 className="font-semibold text-red-700">LLM Warning:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>You can withdraw from the study at any time</li>
-              <li>Your data will be anonymized for research purposes</li>
-              <li>Data will be stored securely and used only for research</li>
+              <li>Demographic data will be used with LLM agents to create personalized responses. We will be using free agents such as https://openrouter.ai/nvidia/nemotron-nano-9b-v2:free or https://openrouter.ai/openrouter/sonoma-dusk-alpha which do use chat data for training.</li>
+              <li>We recommend not sharing any sensitive personal information during your interactions.</li>
+              <li>Data shared during the demographics survey DOES NOT need to be accurate or specific.</li>
+              <li>Fake data can be used where this is a concern, including names, jobs, age, etc.</li>
+              <li>Survey data will be kept securely and kept confidential. NOT used with LLMs.</li>
             </ul>
           </div>
         </div>
