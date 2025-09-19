@@ -66,8 +66,11 @@ export default function AnalyticsPage() {
           return acc;
         }, {});
 
-        const messagesA = session.conversations.find(c => c.side === "A")?.messages.length || 0;
-        const messagesB = session.conversations.find(c => c.side === "B")?.messages.length || 0;
+        const conversationA = session.conversations.find(c => c.side === "A");
+        const conversationB = session.conversations.find(c => c.side === "B");
+        
+        const messagesA = conversationA ? (Array.isArray(conversationA.messages) ? conversationA.messages.length : JSON.parse(conversationA.messages as string).length) : 0;
+        const messagesB = conversationB ? (Array.isArray(conversationB.messages) ? conversationB.messages.length : JSON.parse(conversationB.messages as string).length) : 0;
 
         csvRows.push([
           participant.id,

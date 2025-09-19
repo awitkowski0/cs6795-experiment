@@ -32,11 +32,12 @@ export function ProgressBar({ progress, showPercentage = true, showSteps = false
 
   const getCurrentStep = () => {
     for (let i = SURVEY_STEPS.length - 1; i >= 0; i--) {
-      if (progress >= SURVEY_STEPS[i].percentage) {
-        return SURVEY_STEPS[i];
+      const step = SURVEY_STEPS[i];
+      if (step && progress >= step.percentage) {
+        return step;
       }
     }
-    return SURVEY_STEPS[0];
+    return SURVEY_STEPS[0] || { name: "Start", percentage: 0 };
   };
 
   const currentStep = getCurrentStep();

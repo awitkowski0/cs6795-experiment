@@ -214,9 +214,9 @@ class SurveyStorage {
       p => p.challengeNumber === challengeNumber
     );
 
-    if (progressIndex >= 0) {
-      session.challengeProgress[progressIndex].ratings = ratings;
-      session.challengeProgress[progressIndex].completedAt = new Date();
+    if (progressIndex >= 0 && session.challengeProgress[progressIndex]) {
+      session.challengeProgress[progressIndex]!.ratings = ratings;
+      session.challengeProgress[progressIndex]!.completedAt = new Date();
     }
 
     return this.saveSession(session);

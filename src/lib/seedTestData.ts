@@ -91,17 +91,17 @@ export async function seedTestData() {
     // Create test ratings
     await db.rating.createMany({
       data: [
-        { sessionId: session1.id, question: "helpfulness_a", value: 6 },
-        { sessionId: session1.id, question: "helpfulness_b", value: 7 },
-        { sessionId: session1.id, question: "trustworthiness_a", value: 6 },
-        { sessionId: session1.id, question: "trustworthiness_b", value: 7 },
-        { sessionId: session1.id, question: "intelligence_a", value: 5 },
-        { sessionId: session1.id, question: "intelligence_b", value: 7 },
-        { sessionId: session1.id, question: "friendliness_a", value: 7 },
-        { sessionId: session1.id, question: "friendliness_b", value: 5 },
-        { sessionId: session1.id, question: "confidence", value: 6 },
-        { sessionId: session1.id, question: "choice", textValue: "Agent B" },
-        { sessionId: session1.id, question: "open_ended", textValue: "Agent B provided more detailed and practical information for trip planning." },
+        { sessionId: session1.id, questionType: "helpfulness_a", value: 6 },
+        { sessionId: session1.id, questionType: "helpfulness_b", value: 7 },
+        { sessionId: session1.id, questionType: "trustworthiness_a", value: 6 },
+        { sessionId: session1.id, questionType: "trustworthiness_b", value: 7 },
+        { sessionId: session1.id, questionType: "intelligence_a", value: 5 },
+        { sessionId: session1.id, questionType: "intelligence_b", value: 7 },
+        { sessionId: session1.id, questionType: "friendliness_a", value: 7 },
+        { sessionId: session1.id, questionType: "friendliness_b", value: 5 },
+        { sessionId: session1.id, questionType: "confidence", value: 6 },
+        { sessionId: session1.id, questionType: "choice", textValue: "Agent B" },
+        { sessionId: session1.id, questionType: "open_ended", textValue: "Agent B provided more detailed and practical information for trip planning." },
       ],
     });
 
