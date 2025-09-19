@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChatWindow, type ChatMessage } from "./ChatWindow";
 
 interface Challenge {
@@ -32,9 +32,28 @@ export function ChallengeScreen({ challenge, participantData, onComplete }: Chal
   const [loadingB, setLoadingB] = useState(false);
   const [questionsUsedA, setQuestionsUsedA] = useState(0);
   const [questionsUsedB, setQuestionsUsedB] = useState(0);
-  
-  const maxQuestions = 3;
+  const initialPromptRun = useRef(false);
+
+  const maxQuestions = 5;
   const minQuestions = 1;
+
+useEffect(() => {
+    if (!initialPromptRun.current) {
+      const runInitialPrompt = async () => {
+        setLoadingA(true);
+        setLoadingB(true);
+
+        await Promise.all([
+          handleSendMessageA(challenge.userPrompt),
+          handleSendMessageB(challenge.userPrompt)
+        ]);
+      };
+
+      runInitialPrompt();
+      
+      initialPromptRun.current = true;
+    }
+  }, [challenge]);
 
   const handleSendMessageA = async (message: string) => {
     if (questionsUsedA >= maxQuestions) return;
@@ -183,15 +202,8 @@ export function ChallengeScreen({ challenge, participantData, onComplete }: Chal
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-white pt-20">
-        <div className="bg-gray-50 p-4 rounded border">
-          <h2 className="text-sm font-semibold text-black mb-2">Challenge Prompt:</h2>
-          <p className="text-sm text-black whitespace-pre-wrap">{challenge.userPrompt}</p>
-        </div>
-      </div>
-
-      <div className="flex-1 p-6 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-360px)]">
+      <div className="flex-1 p-6 overflow-hidden pt-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(78vh)]">
           <ChatWindow
             title="AI Assistant A"
             messages={conversationA}
