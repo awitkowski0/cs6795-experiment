@@ -121,12 +121,12 @@ export function SurveyWorkflow() {
               You may now close this window. If you have any questions about the study,
               you can contact me at ajw@gatech.edu
             </p>
-            <button
+            {/* <button
               onClick={clearStorage}
               className="px-6 py-3 bg-gray-600 text-white hover:bg-gray-700 transition-colors"
             >
               Start New Session (Admin)
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
