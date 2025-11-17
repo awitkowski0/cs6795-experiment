@@ -24,6 +24,7 @@ interface SurveyState {
 interface SurveyContextValue {
   state: SurveyState;
   giveConsent: () => void;
+  doneReading: () => void;
   submitDemographics: (data: DemographicsData, participantId: string) => void;
   startChallenge: (sessionId: string) => void;
   completeChallenge: (conversationA: ChatMessage[], conversationB: ChatMessage[]) => void;
@@ -121,6 +122,10 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   }, [state.step, state.participantData, state.currentChallengeNumber, state.isComplete]);
 
   const giveConsent = () => {
+    setState(prev => ({ ...prev, step: "readme", hasExistingSession: true }));
+  };
+
+  const doneReading = () => {
     setState(prev => ({ ...prev, step: "demographics", hasExistingSession: true }));
   };
 
@@ -244,6 +249,7 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   const contextValue: SurveyContextValue = {
     state,
     giveConsent,
+    doneReading,
     submitDemographics,
     startChallenge,
     completeChallenge,

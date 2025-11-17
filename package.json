@@ -33,6 +33,7 @@
 		"remark-gfm": "^4.0.1",
 		"server-only": "^0.0.1",
 		"superjson": "^2.2.1",
+		"vercel": "^48.1.0",
 		"zod": "^3.25.76"
 	},
 	"devDependencies": {

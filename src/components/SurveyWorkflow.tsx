@@ -11,9 +11,10 @@ import { ProgressBar } from "./ProgressBar";
 import { api } from "~/trpc/react";
 import type { ChatMessage } from "./ChatWindow";
 import { type RouterOutputs } from "~/trpc/react";
+import { ReadmeDialog } from "./ReadmeDialog";
 
 export function SurveyWorkflow() {
-  const { state, giveConsent, submitDemographics, startChallenge, completeChallenge, submitChallengeRating, submitFinalRatings, clearStorage } = useSurvey();
+  const { state, giveConsent, doneReading, submitDemographics, startChallenge, completeChallenge, submitFinalRatings } = useSurvey();
   const [currentChallenge, setCurrentChallenge] = useState<RouterOutputs["survey"]["getChallenge"] | null>(null);
   const [loading, setLoading] = useState(false);
   
@@ -141,6 +142,16 @@ export function SurveyWorkflow() {
           <DataConsentDialog
             isOpen={true}
             onConsent={giveConsent}
+            onDecline={handleDeclineConsent}
+          />
+        </div>
+      )}
+      
+      {state.step === "readme" && (
+        <div className="min-h-screen flex items-center justify-center pt-20">
+          <ReadmeDialog
+            isOpen={true}
+            onConsent={doneReading}
             onDecline={handleDeclineConsent}
           />
         </div>

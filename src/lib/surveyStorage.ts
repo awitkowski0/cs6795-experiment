@@ -3,6 +3,7 @@ import type { ChatMessage } from "~/components/ChatWindow";
 
 export type SurveyStep = 
   | "consent"
+  | "readme"
   | "demographics"
   | "challenge"
   | "rating"
@@ -167,6 +168,7 @@ class SurveyStorage {
 
     const stepProgress = {
       consent: 5,
+      readme: 8,
       demographics: 10,
       challenge: 10 + (session.currentChallengeNumber - 1) * 15, // Each challenge worth 15%
       rating: 10 + (session.currentChallengeNumber - 1) * 15 + 7.5, // Rating adds 7.5% (half of challenge)
